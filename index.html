@@ -111,7 +111,7 @@
       Introducere manuală CUIM
     </label>
 
-    <form id="cuimForm" onsubmit="confirmCuim(event)">
+<form id="cuimForm" onsubmit="return confirmCuim(event)">
       <input
         id="cuim"
         type="text"
@@ -214,6 +214,7 @@
 
       showResult("Se verifică prezența după CUIM...");
       redirectToCheckIn("cuim", cuim);
+      return false;
     }
   </script>
 </body>
