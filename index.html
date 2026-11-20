@@ -80,10 +80,17 @@
         await scanner.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
-          (decodedText) => {
-            // Nu afișăm și nu transmitem tokenuri QR.
-            showResult("Cod QR citit cu succes. Test OK.");
-          },
+(decodedText) => {
+  const token = String(decodedText || '').trim();
+
+  if (!token) return;
+
+  showResult("Cod QR citit. Se verifică prezența...", "");
+
+  window.location.href =
+    "https://script.google.com/macros/s/AKfycbw6JorHlBmsyglMKA9AEGedG88G9UwU9DedStY5RlKvgbP8FWJD4giAmMe7GB_deLw-/exec" +
+    "?token=" + encodeURIComponent(token);
+},
           () => {}
         );
 
