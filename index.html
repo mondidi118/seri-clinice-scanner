@@ -111,21 +111,27 @@
       Introducere manuală CUIM
     </label>
 
-<form id="cuimForm" onsubmit="return confirmCuim(event)">
-      <input
-        id="cuim"
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]+"
-        autocomplete="off"
-        placeholder="CUIM participant"
-        required
-      >
 
-      <button id="confirmCuim" type="submit">
-        CONFIRMĂ PREZENȚA
-      </button>
-    </form>
+<form
+  action="https://script.google.com/macros/s/AKfycbw6JorHlBmsyglMKA9AEGedG88G9UwU9DedStY5RlKvgbP8FWJD4giAmMe7GB_deLw-/exec"
+  method="GET"
+>
+  <input
+    id="cuim"
+    name="cuim"
+    type="text"
+    inputmode="numeric"
+    pattern="[0-9]+"
+    autocomplete="off"
+    placeholder="CUIM participant"
+    required
+  >
+
+  <button id="confirmCuim" type="submit">
+    CONFIRMĂ PREZENȚA
+  </button>
+</form>
+
   </main>
 
   <script>
