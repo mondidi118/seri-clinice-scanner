@@ -222,6 +222,16 @@
       redirectToCheckIn("cuim", cuim);
       return false;
     }
+
+    window.addEventListener("load", function() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.has("reload")) {
+    setTimeout(function() {
+      startScanner();
+    }, 800);
+  }
+});
   </script>
 </body>
 </html>
