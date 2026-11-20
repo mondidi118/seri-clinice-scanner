@@ -3,71 +3,157 @@
 <html lang="ro">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1">
-  <title>Seri clinice botoșănene – Scanner QR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Seri clinice botoșănene – Scanner</title>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <style>
+    * { box-sizing: border-box; }
+
     body {
       font-family: Arial, sans-serif;
       background: #f4f6f9;
       text-align: center;
-      padding: 20px;
+      padding: 16px;
       color: #202b3a;
     }
+
     main {
       max-width: 480px;
       margin: auto;
       background: white;
-      padding: 20px;
-      border-radius: 12px;
+      padding: 22px 16px;
+      border-radius: 14px;
     }
-    #reader { width: 100%; margin: 20px auto; }
+
+    h2 { margin-top: 0; }
+
     button {
       background: #174b83;
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 14px 20px;
+      border-radius: 9px;
+      padding: 16px 20px;
       margin: 6px;
-      font-size: 16px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
     }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    #reader {
+      width: 100%;
+      margin: 20px auto;
+    }
+
     #result {
       padding: 15px;
-      margin-top: 20px;
+      margin-top: 12px;
       overflow-wrap: anywhere;
+      font-size: 17px;
+    }
+
+    .separator {
+      margin: 28px 0 20px;
+      border-top: 1px solid #ddd;
+    }
+
+    .cuim-label {
+      display: block;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #cuim {
+      width: 100%;
+      padding: 17px;
+      border: 2px solid #b5c4d5;
+      border-radius: 9px;
+      font-size: 26px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    #confirmCuim {
+      width: 100%;
+      margin: 15px 0 0;
+      padding: 18px 10px;
+      font-size: 19px;
     }
   </style>
 </head>
 <body>
   <main>
     <h2>Seri clinice botoșănene</h2>
-    <p>Test scanner QR – confirmarea prezenței</p>
+    <p>Confirmarea prezenței participanților</p>
 
-    <button onclick="startScanner()">
+    <button id="startBtn" onclick="startScanner()">
       Pornește camera
     </button>
+
     <button onclick="stopScanner()">
       Oprește camera
     </button>
 
     <div id="reader"></div>
+
     <div id="result" role="status">
       Camera nu este pornită.
     </div>
+
+    <div class="separator"></div>
+
+    <label class="cuim-label" for="cuim">
+      Introducere manuală CUIM
+    </label>
+
+    <form id="cuimForm" onsubmit="confirmCuim(event)">
+      <input
+        id="cuim"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]+"
+        autocomplete="off"
+        placeholder="CUIM participant"
+        required
+      >
+
+      <button id="confirmCuim" type="submit">
+        CONFIRMĂ PREZENȚA
+      </button>
+    </form>
   </main>
 
   <script>
+    const webAppUrl =
+      "https://script.google.com/macros/s/AKfycbw6JorHlBmsyglMKA9AEGedG88G9UwU9DedStY5RlKvgbP8FWJD4giAmMe7GB_deLw-/exec";
+
     let scanner = null;
     let scanning = false;
+    let redirecting = false;
 
     function showResult(message) {
-      document.getElementById("result").textContent =
-        message;
+      document.getElementById("result").textContent = message;
+    }
+
+    function redirectToCheckIn(parameter, value) {
+      if (redirecting) return;
+      redirecting = true;
+
+      document.getElementById("confirmCuim").disabled = true;
+      document.getElementById("startBtn").disabled = true;
+
+      window.location.href =
+        webAppUrl + "?" + parameter + "=" +
+        encodeURIComponent(value);
     }
 
     async function startScanner() {
-      if (scanning) return;
+      if (scanning || redirecting) return;
 
       if (typeof Html5Qrcode === "undefined") {
         showResult("Biblioteca QR nu s-a încărcat.");
@@ -80,17 +166,14 @@
         await scanner.start(
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 220, height: 220 } },
-(decodedText) => {
-  const token = String(decodedText || '').trim();
+          (decodedText) => {
+            const token = String(decodedText || "").trim();
 
-  if (!token) return;
+            if (!token || redirecting) return;
 
-  showResult("Cod QR citit. Se verifică prezența...", "");
-
-  window.location.href =
-    "https://script.google.com/macros/s/AKfycbw6JorHlBmsyglMKA9AEGedG88G9UwU9DedStY5RlKvgbP8FWJD4giAmMe7GB_deLw-/exec" +
-    "?token=" + encodeURIComponent(token);
-},
+            showResult("Cod QR citit. Se verifică prezența...");
+            redirectToCheckIn("token", token);
+          },
           () => {}
         );
 
@@ -98,12 +181,14 @@
         showResult("Camera pornită. Scanează un cod QR.");
       } catch (error) {
         scanner = null;
-        showResult("Eroare cameră: " + error.message);
+        scanning = false;
+        showResult("Eroare cameră: " + (error.message || error));
       }
     }
 
     async function stopScanner() {
       if (!scanner) return;
+
       try {
         if (scanning) await scanner.stop();
         scanner.clear();
@@ -111,8 +196,24 @@
         scanner = null;
         showResult("Camera oprită.");
       } catch (error) {
-        showResult("Eroare la oprire: " + error.message);
+        showResult("Eroare la oprire: " + (error.message || error));
       }
+    }
+
+    function confirmCuim(event) {
+      event.preventDefault();
+
+      if (redirecting) return;
+
+      const cuim = document.getElementById("cuim").value.trim();
+
+      if (!/^\d+$/.test(cuim)) {
+        showResult("CUIM invalid. Introdu numai cifre.");
+        return;
+      }
+
+      showResult("Se verifică prezența după CUIM...");
+      redirectToCheckIn("cuim", cuim);
     }
   </script>
 </body>
