@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1">
+  <title>Seri clinice botoșănene – Scanner QR</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      text-align: center;
+      padding: 20px;
+      color: #202b3a;
+    }
+    main {
+      max-width: 480px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    #reader { width: 100%; margin: 20px auto; }
+    button {
+      background: #174b83;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin: 6px;
+      font-size: 16px;
+    }
+    #result {
+      padding: 15px;
+      margin-top: 20px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Seri clinice botoșănene</h2>
+    <p>Test scanner QR – confirmarea prezenței</p>
+
+    <button onclick="startScanner()">
+      Pornește camera
+    </button>
+    <button onclick="stopScanner()">
+      Oprește camera
+    </button>
+
+    <div id="reader"></div>
+    <div id="result" role="status">
+      Camera nu este pornită.
+    </div>
+  </main>
+
+  <script>
+    let scanner = null;
+    let scanning = false;
+
+    function showResult(message) {
+      document.getElementById("result").textContent =
+        message;
+    }
+
+    async function startScanner() {
+      if (scanning) return;
+
+      if (typeof Html5Qrcode === "undefined") {
+        showResult("Biblioteca QR nu s-a încărcat.");
+        return;
+      }
+
+      try {
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (decodedText) => {
+            // Nu afișăm și nu transmitem tokenuri QR.
+            showResult("Cod QR citit cu succes. Test OK.");
+          },
+          () => {}
+        );
+
+        scanning = true;
+        showResult("Camera pornită. Scanează un cod QR.");
+      } catch (error) {
+        scanner = null;
+        showResult("Eroare cameră: " + error.message);
+      }
+    }
+
+    async function stopScanner() {
+      if (!scanner) return;
+      try {
+        if (scanning) await scanner.stop();
+        scanner.clear();
+        scanning = false;
+        scanner = null;
+        showResult("Camera oprită.");
+      } catch (error) {
+        showResult("Eroare la oprire: " + error.message);
+      }
+    }
+  </script>
+</body>
+</html>
